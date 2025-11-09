@@ -1,32 +1,27 @@
 {
-  "name": "auth_service",
+  "name": "book_service",
   "version": "1.0.0",
   "description": "",
+  "license": "ISC",
+  "author": "SasadaDev",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
-  "keywords": [],
-  "author": "SasadaDev",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
     "pg": "8.13.0",
     "pg-hstore": "2.3.4",
     "sequelize": "^6.37.6"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.9.2",
     "@types/pg": "^8.15.6",
     "@types/sequelize": "^4.28.20",

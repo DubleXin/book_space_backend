@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { authRouter, healthRouter } from "./routes";
+import { healthRouter } from "./routes";
+import { bookRouter } from "./routes";
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", authRouter);
 app.use("/health", healthRouter);
+app.use("/api/book", bookRouter);
 
 export default app;
