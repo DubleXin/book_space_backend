@@ -8,7 +8,7 @@ FROM base AS dev
 ENV NODE_ENV=development
 RUN npm install
 COPY . .
-EXPOSE 5000
+EXPOSE 4000
 CMD ["npm", "run", "dev"]
 
 # -------- Build stage --------
@@ -26,6 +26,6 @@ COPY package*.json ./
 RUN npm ci --only=production
 COPY --from=builder /usr/src/app/dist ./dist
 USER node
-EXPOSE 5000
+EXPOSE 4000
 
 CMD ["npm", "run", "start"]

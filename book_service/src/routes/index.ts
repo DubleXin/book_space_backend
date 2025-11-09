@@ -1,2 +1,2 @@
-export { default as authRouter } from "./auth.routes";
 export { default as healthRouter } from "./healthCheck";
+export { default as bookRouter } from "./book.routes";
