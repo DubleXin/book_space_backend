@@ -134,6 +134,32 @@ services:
     networks:
       - backend
 
+  api-profile:
+    build:
+      context: ./profile_service
+      dockerfile: Dockerfile
+      target: dev
+    image: api-profile
+    container_name: api-profile
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./profile_service/.env
+    ports:
+      - "6000:6000"
+    volumes:
+      - ./profile_service/src:/usr/src/app/src
+      - /usr/src/app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
 volumes:
   pgdata-book-space:
 
