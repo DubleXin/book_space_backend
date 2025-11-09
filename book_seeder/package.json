@@ -1,5 +1,5 @@
 {
-  "name": "book_service",
+  "name": "book_seeder",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
@@ -7,25 +7,21 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "fetch-books": "ts-node src/scripts/fetchBooks.ts",
+    "seed-books": "ts-node src/scripts/seedBooks.ts"
   },
   "dependencies": {
-    "cors": "^2.8.5",
+    "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "pg": "8.13.0",
     "pg-hstore": "2.3.4",
-    "jsonwebtoken": "^9.0.2",
     "sequelize": "^6.37.6"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/node": "^24.9.2",
     "@types/pg": "^8.15.6",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/sequelize": "^4.28.20",
     "sequelize-cli": "^6.6.3",
     "ts-node-dev": "^2.0.0",

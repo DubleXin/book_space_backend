@@ -1,13 +1,29 @@
-import { DataTypes, Model } from "sequelize";
-import sequelize from "../config/db";
-import User from "./user.model";
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "../config";
 
-class RefreshToken extends Model {
+interface RefreshTokenAttributes {
+  id: number;
+  token: string;
+  userId: number;
+  expiresAt: Date;
+  revoked: boolean;
+}
+
+interface RefreshTokenCreationAttributes
+  extends Optional<RefreshTokenAttributes, "id" | "revoked"> {}
+
+class RefreshToken
+  extends Model<RefreshTokenAttributes, RefreshTokenCreationAttributes>
+  implements RefreshTokenAttributes
+{
   public id!: number;
   public token!: string;
   public userId!: number;
   public expiresAt!: Date;
   public revoked!: boolean;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 RefreshToken.init(
@@ -20,6 +36,14 @@ RefreshToken.init(
     token: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
     expiresAt: {
       type: DataTypes.DATE,
@@ -35,8 +59,5 @@ RefreshToken.init(
     tableName: "refresh_tokens",
   }
 );
-
-User.hasMany(RefreshToken, { foreignKey: "userId", as: "tokens" });
-RefreshToken.belongsTo(User, { foreignKey: "userId" });
 
 export default RefreshToken;

@@ -1,2 +1,3 @@
 export { healthCheck } from "./healthCheck";
-export { getBook } from "./book.controller";
+export { getAllBooks, getBookById } from "./book.controller";
+export { getAllSubjects, getBooksBySubject } from "./subject.controller";
