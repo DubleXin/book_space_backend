@@ -90,6 +90,50 @@ services:
     networks:
       - backend
 
+  book-fetcher:
+    build:
+      context: ./book_seeder
+      dockerfile: Dockerfile
+    image: book-fetcher
+    container_name: book_fetcher
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+      - ./book_seeder/.env
+    environment:
+      NODE_ENV: development
+      FETCH_ON_START: false
+    command: ["npm", "run", "fetch-books"]
+    volumes:
+      - ./book_seeder:/usr/src/app
+    restart: "no"
+    networks:
+      - backend
+
+  book-seeder:
+    build:
+      context: ./book_seeder
+      dockerfile: Dockerfile
+    image: book-seeder
+    container_name: book_seeder
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+      - ./book_seeder/.env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    command: ["npm", "run", "seed-books"]
+    volumes:
+      - ./book_seeder:/usr/src/app
+    restart: "no"
+    networks:
+      - backend
+
 volumes:
   pgdata-book-space:
 
