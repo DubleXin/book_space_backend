@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getBook } from "../controllers";
-import { authenticate } from "../middlewares";
+import { getAllBooks, getBookById } from "../controllers";
 
 const router = Router();
 
-router.get("/", authenticate, getBook);
+router.get("/", getAllBooks);
+router.get("/:id", getBookById);
 
 export default router;
