@@ -1,11 +1,23 @@
 import { Request, Response } from "express";
 import { Book, Subject } from "../models";
-
 export const getAllBooks = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
-    const subject = req.query.subject as string | undefined;
+
+    const subjectParam = req.query.subject as string | undefined;
+    const subjects =
+      subjectParam
+        ?.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean) || [];
+
+    const authorParam = req.query.author as string | undefined;
+    const authors =
+      authorParam
+        ?.split(",")
+        .map((a) => a.trim())
+        .filter(Boolean) || [];
 
     const options: any = {
       include: [
@@ -16,21 +28,32 @@ export const getAllBooks = async (req: Request, res: Response) => {
           through: { attributes: [] },
         },
       ],
+      where: {},
       limit,
       offset,
     };
 
-    if (subject) {
-      options.include[0].where = { name: subject };
+    if (subjects.length > 0) {
+      options.include[0].where = { name: subjects };
+    }
+
+    if (authors.length > 0) {
+      options.where.author = authors;
     }
 
     const books = await Book.findAll(options);
-    return res.json({ success: true, data: books });
+
+    return res.json({
+      success: true,
+      count: books.length,
+      data: books,
+    });
   } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch books" });
+    console.error("Failed to fetch books:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch books",
+    });
   }
 };
 
