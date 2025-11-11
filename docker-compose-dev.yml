@@ -160,6 +160,32 @@ services:
         condition: service_healthy
     networks:
       - backend
+  api-recommendation:
+    build:
+      context: ./recommendation_service
+      dockerfile: Dockerfile
+      target: dev
+    image: api-recommendation
+    container_name: api-recommendation
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./recommendation_service/.env
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./recommendation_service/src:/usr/src/app/src
+      - /usr/src/app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
 volumes:
   pgdata-book-space:
 

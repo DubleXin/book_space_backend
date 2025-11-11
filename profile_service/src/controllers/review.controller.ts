@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { Review } from "../models";
+import axios from "axios";
+
+const BOOK_SERVICE_URL = process.env.BOOK_SERVICE_URL || "http://api-book:4000";
 
 export const createReview = async (req: Request, res: Response) => {
   try {
@@ -41,6 +44,41 @@ export const getReviewsByBook = async (req: Request, res: Response) => {
     return res.json({ success: true, data: reviews });
   } catch (err) {
     console.error("Failed to fetch book reviews:", err);
+    return res.status(500).json({ success: false, message: "Fetch failed" });
+  }
+};
+
+export const getReviewsByUserId = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId)
+      return res.status(400).json({
+        success: false,
+        message: "Missing userId param",
+      });
+
+    const reviews = await Review.findAll({ where: { userId } });
+    if (!reviews.length)
+      return res
+        .status(404)
+        .json({ success: false, message: "No reviews found for this user" });
+
+    const enriched = await Promise.all(
+      reviews.map(async (r) => {
+        try {
+          const { data } = await axios.get(
+            `${BOOK_SERVICE_URL}/api/book/${r.bookId}`
+          );
+          return { ...r.toJSON(), book: data.data };
+        } catch {
+          return { ...r.toJSON(), book: null };
+        }
+      })
+    );
+
+    return res.json({ success: true, data: enriched });
+  } catch (err) {
+    console.error("Failed to fetch reviews by user:", err);
     return res.status(500).json({ success: false, message: "Fetch failed" });
   }
 };
