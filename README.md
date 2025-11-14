@@ -139,7 +139,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/DubleXin/book_space_backend.git
-cd book-space-backend
+cd book_space_backend
 
 ```
 
