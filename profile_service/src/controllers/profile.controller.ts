@@ -13,7 +13,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
         username: `user_${userId}`,
         bio: null,
       });
-      console.log(`Created new profile for user ${userId}`);
+      console.debug(`Created new profile for user ${userId}`);
     }
 
     return res.json({ success: true, data: profile });

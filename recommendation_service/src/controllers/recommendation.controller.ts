@@ -1,60 +1,49 @@
 import { Request, Response } from "express";
-import { Recommendation } from "../models";
-import { generateAlgorithmicRecommendations } from "../services/algorithm.service";
-
-const COOLDOWN_HOURS = 1;
+import { getAlgorithmicForUser, getAIHighlightsForUser } from "../services";
 
 export const getUserRecommendations = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    if (process.env.NODE_ENV === "development") {
-      console.debug(" Dev mode: skipping cooldown check");
-      const newRecs = await generateAlgorithmicRecommendations(userId);
-      return res.json({
-        success: true,
-        cached: false,
-        data: newRecs,
-        message: "Generated fresh recommendations (dev mode)",
-      });
-    }
+    const { data, cached, message } = await getAlgorithmicForUser(userId);
 
-    const lastRecord = await Recommendation.findOne({
-      where: { userId },
-      order: [["generatedAt", "DESC"]],
-    });
-
-    const now = new Date();
-    const withinCooldown =
-      lastRecord &&
-      (now.getTime() - new Date(lastRecord.generatedAt).getTime()) /
-        (1000 * 60 * 60) <
-        COOLDOWN_HOURS;
-
-    if (withinCooldown) {
-      const cached = await Recommendation.findAll({
-        where: { userId },
-        order: [["score", "DESC"]],
-      });
-      return res.json({
-        success: true,
-        cached: true,
-        data: cached,
-        message: `Using cached recommendations (within ${COOLDOWN_HOURS}h window)`,
-      });
-    }
-
-    const newRecs = await generateAlgorithmicRecommendations(userId);
     return res.json({
       success: true,
-      cached: false,
-      data: newRecs,
-      message: "New recommendations generated",
+      cached,
+      data,
+      message,
     });
   } catch (err) {
     console.error("Failed to get recommendations:", err);
-    res
+    return res
       .status(500)
       .json({ success: false, message: "Failed to get recommendations" });
+  }
+};
+
+export const getEnhancedRecommendations = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = (req as any).user.id;
+
+    const { data: algorithmic, cached } = await getAlgorithmicForUser(userId);
+    const aiHighlights = await getAIHighlightsForUser(userId, algorithmic);
+
+    return res.json({
+      success: true,
+      cachedAlgorithmic: cached,
+      data: {
+        recommendedBooks: algorithmic,
+        aiHighlights,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to get AI-enhanced recommendations:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get AI-enhanced recommendations",
+    });
   }
 };
