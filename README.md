@@ -45,7 +45,7 @@ graph LR
 
 # **Recommendation Engine Architecture**
 
-### 1️Algorithmic Recommendation Flow
+### 1. Algorithmic Recommendation Flow
 
 ```mermaid
 sequenceDiagram
@@ -75,7 +75,7 @@ sequenceDiagram
 
 ---
 
-### 2️ AI-Enhanced Recommendation Flow
+### 2. AI-Enhanced Recommendation Flow
 
 ```mermaid
 sequenceDiagram
@@ -147,25 +147,13 @@ cd book_space_backend
 
 # **Makefile Commands**
 
-Command
+| Command                         | Description                 |
+|---------------------------------|-----------------------------|
+| `make ENV=dev compose-up`       | Start all services          |
+| `make ENV=dev compose-down`     | Stop all services           |
+| `make ENV=dev compose-build`    | Build all Docker images     |
+| `make logs service=name`        | View logs of a service      |
 
-Description
-
-`make ENV=dev compose-up`
-
-Start all services
-
-`make ENV=dev compose-down`
-
-Stop all services
-
-`make ENV=dev compose-build`
-
-Build all Docker images
-
-`make logs service=name`
-
-View logs of a specific service
 
 ---
 
@@ -678,3 +666,12 @@ This backend demonstrates:
 - Dockerized infrastructure
 - Hybrid algorithmic + AI-recommendation engine
 - Clear documentation and diagrams
+
+# **Tech Stack**
+
+- Node.js + Express + TypeScript
+- PostgreSQL + Sequelize
+- Docker & Docker Compose
+- JWT authentication
+- OpenAI Responses API (`o3-mini`) for AI highlights
+- Mermaid diagrams for architecture & DB schema
