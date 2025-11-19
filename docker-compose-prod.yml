@@ -1,0 +1,148 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15.1-alpine
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    volumes:
+      - pgdata-book-space:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    networks:
+      - backend
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api-auth:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+      target: production
+    image: api-auth
+    container_name: api-auth
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./auth_service/.env
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health/db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  api-book:
+    build:
+      context: ./book_service
+      dockerfile: Dockerfile
+      target: production
+    image: api-book
+    container_name: api-book
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./book_service/.env
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  api-profile:
+    build:
+      context: ./profile_service
+      dockerfile: Dockerfile
+      target: production
+    image: api-profile
+    container_name: api-profile
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./profile_service/.env
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    ports:
+      - "6000:6000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  api-recommendation:
+    build:
+      context: ./recommendation_service
+      dockerfile: Dockerfile
+      target: production
+    image: api-recommendation
+    container_name: api-recommendation
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./recommendation_service/.env
+    environment:
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+    ports:
+      - "7000:7000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  pgdata-book-space:
+
+networks:
+  backend:
+    driver: bridge

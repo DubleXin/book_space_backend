@@ -8,10 +8,11 @@ dotenv.config();
 
 const app = express();
 
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN!;
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: FRONTEND_ORIGIN,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   })
