@@ -1,0 +1,23 @@
+{
+  "name": "db_initializer",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "sasadaDev",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/sync.ts"
+  },
+  "dependencies": {
+    "sequelize": "^6.37.6",
+    "pg": "8.13.0",
+    "pg-hstore": "2.3.4",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.10.0"
+  }
+}

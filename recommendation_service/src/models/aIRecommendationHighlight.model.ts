@@ -6,9 +6,9 @@ interface AIHighlightAttributes {
   userId: number;
   bookId: number;
   reason: string;
-  score?: number | null; // optional if you want to store AI score
-  generatedAt?: Date; // when highlight was generated
-  expiresAt: Date; // TTL timestamp for caching logic
+  score?: number | null;
+  generatedAt?: Date;
+  expiresAt: Date;
 }
 
 interface AIHighlightCreationAttributes
