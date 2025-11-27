@@ -2,6 +2,7 @@ import { Recommendation } from "../models";
 import { generateAlgorithmicRecommendations } from "./algorithm.service";
 
 const COOLDOWN_HOURS = 1;
+const CASHED_LIMIT = 20;
 
 export async function getAlgorithmicForUser(userId: number) {
   const lastRecord = await Recommendation.findOne({
@@ -20,6 +21,7 @@ export async function getAlgorithmicForUser(userId: number) {
     const cached = await Recommendation.findAll({
       where: { userId },
       order: [["score", "DESC"]],
+      limit: CASHED_LIMIT,
     });
 
     return {
