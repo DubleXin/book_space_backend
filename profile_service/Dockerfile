@@ -7,7 +7,7 @@ FROM base AS dev
 ENV NODE_ENV=development
 RUN npm install
 COPY . .
-EXPOSE 6000
+EXPOSE 4050
 CMD ["npm", "run", "dev"]
 # -------- Build stage --------
 FROM base AS builder
@@ -24,5 +24,5 @@ RUN npm ci --omit=dev
 RUN apt-get update && apt-get install -y curl
 COPY --from=builder /usr/src/app/dist ./dist
 USER node
-EXPOSE 6000
+EXPOSE 4050
 CMD ["npm", "run", "start"]

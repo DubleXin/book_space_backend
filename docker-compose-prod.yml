@@ -102,9 +102,9 @@ services:
     environment:
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
     ports:
-      - "6000:6000"
+      - "4050:4050"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4050/health"]
       interval: 10s
       timeout: 5s
       retries: 5

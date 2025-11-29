@@ -146,12 +146,12 @@ services:
       - .env
       - ./profile_service/.env
     ports:
-      - "6000:6000"
+      - "4050:4050"
     volumes:
       - ./profile_service/src:/usr/src/app/src
       - /usr/src/app/node_modules
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4050/health"]
       interval: 10s
       timeout: 5s
       retries: 5
