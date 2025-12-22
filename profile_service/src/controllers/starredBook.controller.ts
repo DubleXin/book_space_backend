@@ -55,9 +55,7 @@ export const getStarredBooksByUserId = async (req: Request, res: Response) => {
     const starred = await StarredBook.findAll({ where: { userId } });
 
     if (!starred.length)
-      return res
-        .status(404)
-        .json({ success: false, message: "No starred books found" });
+      return res.status(204).json({ success: true, data: [] });
 
     const enriched = await Promise.all(
       starred.map(async (s) => {

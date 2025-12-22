@@ -29,6 +29,12 @@ export const getEnhancedRecommendations = async (
     const userId = (req as any).user.id;
 
     const { data: algorithmic, cached } = await getAlgorithmicForUser(userId);
+    if (algorithmic.length == 0)
+      return res.status(204).json({
+        success: true,
+        cachedAlgorithmic: [],
+        data: [],
+      });
     const aiHighlights = await getAIHighlightsForUser(userId, algorithmic);
 
     return res.json({
