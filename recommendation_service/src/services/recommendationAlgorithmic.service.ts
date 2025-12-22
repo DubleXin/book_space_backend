@@ -31,7 +31,13 @@ export async function getAlgorithmicForUser(userId: number) {
     };
   }
 
-  const fresh = await generateAlgorithmicRecommendations(userId);
+  await generateAlgorithmicRecommendations(userId);
+
+  const fresh = await Recommendation.findAll({
+    where: { userId },
+    order: [["score", "DESC"]],
+    limit: CASHED_LIMIT,
+  });
 
   return {
     data: fresh,

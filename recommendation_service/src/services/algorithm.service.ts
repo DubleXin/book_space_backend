@@ -72,5 +72,5 @@ export async function generateAlgorithmicRecommendations(userId: number) {
     { ignoreDuplicates: true }
   );
 
-  return ranked;
+  return;
 }

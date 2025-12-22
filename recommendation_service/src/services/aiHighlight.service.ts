@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import { AIHighlight } from "../models";
 import { aiClient, AI_MODEL } from "../config/ai";
+import { getBooksByIds } from "./book.service";
 
 const HIGHLIGHT_TTL_HOURS = 24;
 
@@ -78,13 +79,30 @@ export async function getAIHighlightsForUser(userId: number, books: any[]) {
     }));
   }
 
-  const slimBooks = books.map((b) => ({
-    id: b.bookId,
-    title: b.title,
-    author: b.author,
-    subjects: b.subjects?.map((s: any) => s.name) ?? [],
-    description: b.description ?? "",
-  }));
+  const bookIds = Array.from(
+    new Set(
+      (books ?? [])
+        .map((r: any) => r.bookId)
+        .filter((id: any) => Number.isInteger(id) && id > 0)
+    )
+  );
+
+  const fullBooks = await getBooksByIds(bookIds);
+
+  const byId = new Map<number, any>(
+    fullBooks.map((b: any) => [Number(b.id), b])
+  );
+
+  const slimBooks = bookIds
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+    .map((b: any) => ({
+      id: Number(b.id),
+      title: b.title ?? "",
+      author: b.author ?? "",
+      subjects: (b.subjects ?? []).map((s: any) => s.name).filter(Boolean),
+      description: b.description ?? "",
+    }));
 
   const systemPrompt = `
 You are a book recommendation assistant.

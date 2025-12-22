@@ -59,9 +59,7 @@ export const getReviewsByUserId = async (req: Request, res: Response) => {
 
     const reviews = await Review.findAll({ where: { userId } });
     if (!reviews.length)
-      return res
-        .status(404)
-        .json({ success: false, message: "No reviews found for this user" });
+      return res.status(204).json({ success: true, data: [] });
 
     const enriched = await Promise.all(
       reviews.map(async (r) => {
