@@ -80,3 +80,41 @@ export const getReviewsByUserId = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: "Fetch failed" });
   }
 };
+
+export const deleteReview = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const reviewIdRaw = req.params.reviewId;
+
+    const reviewId = Number(reviewIdRaw);
+    if (!Number.isFinite(reviewId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid reviewId",
+      });
+    }
+
+    const review = await Review.findByPk(reviewId);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    if (review.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: you can only delete your own reviews",
+      });
+    }
+
+    await review.destroy();
+
+    return res.status(204).send();
+  } catch (err) {
+    console.error("Failed to delete review:", err);
+    return res.status(500).json({ success: false, message: "Deletion failed" });
+  }
+};
