@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { Book, Subject } from "../models";
-import { Op } from "sequelize";
+import { col, fn, literal, Op } from "sequelize";
+import { sequelize } from "../config";
+
 export const getAllBooks = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
@@ -20,34 +22,113 @@ export const getAllBooks = async (req: Request, res: Response) => {
         .map((a) => a.trim())
         .filter(Boolean) || [];
 
-    const options: any = {
+    const searchRaw = (req.query.search ?? req.query.title) as
+      | string
+      | undefined;
+    const search = searchRaw?.trim();
+
+    const minSimilarity = req.query.minSim ? Number(req.query.minSim) : 0.25;
+
+    const whereBase: any = {};
+    if (authors.length > 0) {
+      whereBase.author = { [Op.in]: authors };
+    }
+
+    const andClauses: any[] = [];
+    let attributes: any = undefined;
+    const order: any[] = [];
+
+    if (search) {
+      if (search.length < 3) {
+        andClauses.push({ title: { [Op.iLike]: `%${search}%` } });
+      } else {
+        andClauses.push(
+          literal(`"Book"."title" % ${sequelize.escape(search)}`)
+        );
+
+        if (!Number.isNaN(minSimilarity)) {
+          andClauses.push(
+            sequelize.where(fn("similarity", col("Book.title"), search), {
+              [Op.gte]: minSimilarity,
+            })
+          );
+        }
+
+        const simExpr = fn("similarity", col("Book.title"), search);
+        (attributes as any) ??= { include: [] };
+        (attributes as any).include.push([simExpr, "similarity"]);
+
+        order.push([literal(`"similarity"`), "DESC"]);
+      }
+    }
+
+    if (order.length === 0) {
+      order.push(["createdAt", "DESC"]);
+    }
+
+    const filterSubjectsInclude: any = {
+      model: Subject,
+      as: "subjects",
+      attributes: [],
+      through: { attributes: [] },
+      required: false,
+    };
+
+    if (subjects.length > 0) {
+      filterSubjectsInclude.where = { name: { [Op.in]: subjects } };
+      filterSubjectsInclude.required = true;
+    }
+
+    const page = await Book.findAndCountAll({
+      include: [filterSubjectsInclude],
+      where:
+        andClauses.length > 0
+          ? { ...whereBase, [Op.and]: andClauses }
+          : whereBase,
+      limit,
+      offset,
+      distinct: true,
+      subQuery: false,
+      order,
+      ...(attributes ? { attributes } : {}),
+    });
+
+    const ids = page.rows.map((b: any) => b.id);
+
+    if (ids.length === 0) {
+      return res.json({
+        success: true,
+        count: page.count,
+        data: [],
+        limit,
+        offset,
+      });
+    }
+
+    const fullRows = await Book.findAll({
+      where: { id: { [Op.in]: ids } },
       include: [
         {
           model: Subject,
           as: "subjects",
           attributes: ["name"],
           through: { attributes: [] },
+          required: false,
         },
       ],
-      where: {},
-      limit,
-      offset,
-    };
-
-    if (subjects.length > 0) {
-      options.include[0].where = { name: subjects };
-    }
-
-    if (authors.length > 0) {
-      options.where.author = authors;
-    }
-
-    const books = await Book.findAll(options);
+      ...(attributes ? { attributes } : {}),
+      order: [
+        literal(`array_position(ARRAY[${ids.join(",")}]::int[], "Book"."id")`),
+      ],
+      subQuery: false,
+    });
 
     return res.json({
       success: true,
-      count: books.length,
-      data: books,
+      count: page.count,
+      data: fullRows,
+      limit,
+      offset,
     });
   } catch (err) {
     console.error("Failed to fetch books:", err);
