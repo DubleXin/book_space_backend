@@ -1,4 +1,3 @@
-// seedBooks.ts
 import fs from "fs/promises";
 import path from "path";
 import { sequelize } from "../config";
