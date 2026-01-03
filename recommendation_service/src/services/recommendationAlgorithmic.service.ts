@@ -2,41 +2,62 @@ import { Recommendation } from "../models";
 import { generateAlgorithmicRecommendations } from "./algorithm.service";
 
 const COOLDOWN_HOURS = 1;
-const CASHED_LIMIT = 20;
+const CACHED_LIMIT = 20;
 
-export async function getAlgorithmicForUser(userId: number) {
+async function fetchLastBatch(userId: number) {
   const lastRecord = await Recommendation.findOne({
     where: { userId },
-    order: [["generatedAt", "DESC"]],
+    order: [
+      ["generatedAt", "DESC"],
+      ["id", "DESC"],
+    ],
   });
+
+  if (!lastRecord) {
+    return { generatedAt: null as Date | null, rows: [] as Recommendation[] };
+  }
+
+  const rows = await Recommendation.findAll({
+    where: { userId, generatedAt: lastRecord.generatedAt },
+    order: [
+      ["score", "DESC"],
+      ["id", "DESC"],
+    ],
+    limit: CACHED_LIMIT,
+  });
+
+  return { generatedAt: lastRecord.generatedAt as Date, rows };
+}
+
+export async function getAlgorithmicForUser(userId: number) {
+  const { generatedAt: lastBatchAt, rows: cachedRows } = await fetchLastBatch(
+    userId
+  );
 
   const now = new Date();
   const withinCooldown =
-    lastRecord &&
-    (now.getTime() - new Date(lastRecord.generatedAt).getTime()) /
-      (1000 * 60 * 60) <
+    lastBatchAt &&
+    (now.getTime() - new Date(lastBatchAt).getTime()) / (1000 * 60 * 60) <
       COOLDOWN_HOURS;
 
   if (withinCooldown) {
-    const cached = await Recommendation.findAll({
-      where: { userId },
-      order: [["score", "DESC"]],
-      limit: CASHED_LIMIT,
-    });
-
     return {
-      data: cached,
+      data: cachedRows,
       cached: true,
       message: "Using cached recommendations (algorithmic)",
     };
   }
 
-  await generateAlgorithmicRecommendations(userId);
+  const newBatchTimestamp = new Date();
+  await generateAlgorithmicRecommendations(userId, newBatchTimestamp);
 
   const fresh = await Recommendation.findAll({
-    where: { userId },
-    order: [["score", "DESC"]],
-    limit: CASHED_LIMIT,
+    where: { userId, generatedAt: newBatchTimestamp },
+    order: [
+      ["score", "DESC"],
+      ["id", "DESC"],
+    ],
+    limit: CACHED_LIMIT,
   });
 
   return {

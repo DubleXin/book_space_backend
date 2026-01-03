@@ -13,7 +13,6 @@ interface BookAttributes {
   id: number;
   title: string;
   author?: string | null;
-  isbn?: string | null;
   publishedYear?: number | null;
   coverUrl?: string | null;
   description?: string | null;
@@ -30,7 +29,6 @@ class Book
   public id!: number;
   public title!: string;
   public author?: string | null;
-  public isbn?: string | null;
   public publishedYear?: number | null;
   public coverUrl?: string | null;
   public description?: string | null;

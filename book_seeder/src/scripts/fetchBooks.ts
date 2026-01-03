@@ -15,7 +15,27 @@ const outputPath = path.resolve(__dirname, BOOKS_JSON_PATH);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Safe GET with retry on HTTP 429 */
+function normText(s: string) {
+  return (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function makeDedupeKey(entry: any) {
+  if (entry?.key) return `openlibrary:${entry.key}`;
+
+  const title = normText(entry?.title ?? "");
+  const author = normText(entry?.author_name?.[0] ?? "unknown");
+  return `title-author:${title}|${author}`;
+}
+
+function uniqMerge(a: string[], b: string[]) {
+  const out = new Set<string>();
+  for (const x of a ?? [])
+    if (typeof x === "string" && x.trim()) out.add(x.trim());
+  for (const x of b ?? [])
+    if (typeof x === "string" && x.trim()) out.add(x.trim());
+  return Array.from(out);
+}
+
 async function safeGet(url: string, retries = 3, delay = 5000): Promise<any> {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -39,7 +59,6 @@ async function safeGet(url: string, retries = 3, delay = 5000): Promise<any> {
   throw new Error(`Failed to fetch after ${retries} retries: ${url}`);
 }
 
-/** Fetch description & subjects from a work entry */
 async function fetchBookData(workKey: string) {
   try {
     const data = await safeGet(`https://openlibrary.org${workKey}.json`);
@@ -54,16 +73,27 @@ async function fetchBookData(workKey: string) {
         : ["none"];
 
     return { description, subjects };
-  } catch (err) {
+  } catch {
     console.warn(`Failed to fetch work ${workKey}`);
     return { description: "no description provided", subjects: ["none"] };
   }
 }
 
-/* ----------------------------- Main logic ----------------------------- */
+type BookJson = {
+  title: string;
+  author: string;
+  isbn: string | null;
+  publishedYear: number | null;
+  coverUrl: string | null;
+  description: string;
+  externalSource: "openlibrary";
+  externalId: string;
+  subjects: string[];
+  mainSubjects: string[];
+};
 
 async function fetchBooks() {
-  const allBooks: any[] = [];
+  const byKey = new Map<string, BookJson>();
 
   for (const subject of SUBJECTS) {
     console.log(`Fetching ${BOOKS_PER_SUBJECT} books for genre: ${subject}`);
@@ -76,9 +106,19 @@ async function fetchBooks() {
     const docs: any[] = data?.docs ?? [];
 
     for (const entry of docs) {
-      const bookData = await fetchBookData(entry.key);
+      const key = makeDedupeKey(entry);
 
-      const book = {
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.mainSubjects = uniqMerge(existing.mainSubjects, [subject]);
+
+        continue;
+      }
+
+      const workKey = entry.key;
+      const bookData = await fetchBookData(workKey);
+
+      const book: BookJson = {
         title: entry.title,
         author: entry.author_name?.[0] ?? "Unknown",
         isbn: entry.isbn?.[0] ?? null,
@@ -88,12 +128,12 @@ async function fetchBooks() {
           : null,
         description: bookData.description,
         externalSource: "openlibrary",
-        externalId: entry.key,
-        subjects: bookData.subjects,
-        mainSubject: subject,
+        externalId: workKey,
+        subjects: uniqMerge([], bookData.subjects),
+        mainSubjects: [subject],
       };
 
-      allBooks.push(book);
+      byKey.set(key, book);
 
       await sleep(500);
     }
@@ -102,12 +142,14 @@ async function fetchBooks() {
     await sleep(3000);
   }
 
+  const allBooks = Array.from(byKey.values());
+
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, JSON.stringify(allBooks, null, 2));
-  console.log(`Saved ${allBooks.length} books to ${outputPath}`);
+  console.log(
+    `Saved ${allBooks.length} unique books (deduped) to ${outputPath}`
+  );
 }
-
-/* ----------------------------- Runner ----------------------------- */
 
 (async () => {
   const shouldFetch = process.env.FETCH_ON_START?.toLowerCase() === "true";

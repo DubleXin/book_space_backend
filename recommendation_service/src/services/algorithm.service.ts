@@ -2,7 +2,10 @@ import { getUserStars, getUserReviews } from "./profile.service";
 import { getBooksBySubjects, getBooksByAuthors } from "./book.service";
 import Recommendation from "../models/recommendation.model";
 
-export async function generateAlgorithmicRecommendations(userId: number) {
+export async function generateAlgorithmicRecommendations(
+  userId: number,
+  date: Date
+) {
   const stars = await getUserStars(userId);
   const reviews = await getUserReviews(userId);
 
@@ -67,7 +70,7 @@ export async function generateAlgorithmicRecommendations(userId: number) {
       bookId: book.id,
       reason: "Matched by author/subject similarity",
       score: scored.get(book.id)?.score ?? 0,
-      generatedAt: new Date(),
+      generatedAt: date,
     })),
     { ignoreDuplicates: true }
   );

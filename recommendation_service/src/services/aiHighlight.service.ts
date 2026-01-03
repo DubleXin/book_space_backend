@@ -65,7 +65,10 @@ export async function getAIHighlightsForUser(userId: number, books: any[]) {
       userId,
       expiresAt: { [Op.gt]: now },
     },
-    order: [["generatedAt", "DESC"]],
+    order: [
+      ["generatedAt", "DESC"],
+      ["id", "DESC"],
+    ],
     limit: 5,
   });
 
